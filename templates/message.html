@@ -1,0 +1,10 @@
+{% extends "template.html"%}
+
+{%block main%}
+
+<h1>Message</h1>
+<p>{{responses}}</p>
+{% for item in responses %}
+<div>{{item}}</div>
+{% endfor %}
+{%endblock%}

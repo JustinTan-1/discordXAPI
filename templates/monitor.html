@@ -1,0 +1,17 @@
+
+<h2>Search messages in channel: {{channel_id}}</h2>
+<a href="/monitor"><button>Go Back</button></a>
+<form action="/message" method="post">
+    <p>What mode would you like to reply with?</p>
+    <input type="radio" id="ai" name="mode" value="ai">
+    <label for="ai">AI Mode</label><br>
+    <input type="radio" id="manual" name="mode" value="manual">
+    <label for="manual">Manual Text Reply</label><br>
+    <input type="text" name="reply_text" placeholder="Reply With:">   
+<button type="submit">Reply</button>
+{% for item in data %}
+<div class="data">{{item["content"]}} | <strong>FROM:</strong> {{item["author"]["username"]}} | {{item["timestamp"]}} |<input type="checkbox" value={{item["id"]}} name={{item["id"]}}></div>
+{%endfor%}
+<input type="hidden" name="channel_id" value={{channel_id}}>
+     
+</form>

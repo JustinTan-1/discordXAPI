@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Discord Channel Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+  </head>
+  <body>
+    <div class="header">
+      <a class="logo--link" href="/">
+      <div class="header--main">
+        <img class="header--img"src="../static/discord.png">Discord Tool
+      </div>
+        </a>
+      {% if session["user_token"] %}
+        <a class="text--link" href="/logout">Log Out</a>
+      {% else %}
+      <a class="text--link" href="/login">login</a>    
+      {% endif %}
+    </div>
+    <main>
+      <div class="container">
+    {% block main%}{% endblock %}
+        </div>
+    </main>
+  
+  </body>
+</html>
