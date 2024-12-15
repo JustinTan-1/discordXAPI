@@ -4,6 +4,8 @@ import requests
 from flask import Flask, render_template, session, request, redirect
 import json
 import google.generativeai as genai
+from dotenv import load_dotenv
+import os
 
 from helpers import login_required
 
@@ -11,6 +13,7 @@ from helpers import login_required
 from flask_session import Session
 
 app = Flask(__name__)
+load_dotenv()
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -18,9 +21,9 @@ Session(app)
 
 TOKEN = ""
 
-genai.configure(api_key="AIzaSyB28f3tHPnArC2JPzFagxSTQuKdaSA4DEU")
-model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction="You are a chinese person that understands english but only responds in chinese")
-#You are a rude teenager that responds with short responses and quick text messages get straight to the point do not add fluff or punctuation do not use capital letters and use the word nigga sometimes but not always
+genai.configure(api_key=os.getenv("API_KEY"))
+model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction="You are a rude teenager that responds with short responses and quick text messages get straight to the point do not add fluff or punctuation do not use capital letters and use the word nigga sometimes but not always")
+
 @app.route("/")
 @login_required
 def index():
