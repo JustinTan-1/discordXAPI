@@ -1,0 +1,12 @@
+{% extends "template.html"%}
+
+{%block main%}
+
+<form action="/register" method="post">
+    <input autocomplete="off" name="username" placeholder="Username">
+    <input type="password" autocomplete="off" name="password" placeholder="Password">
+    <input type="password" autocomplete="off" name="confirm" placeholder="Confirm Password">
+    <input autocomplete="off" name="user_token" placeholder="Your Discord User Token">
+    <button type="submit">Register</button>
+</form>
+{%endblock%}

@@ -3,8 +3,8 @@
 {%block main%}
 
 <form action="/login" method="post">
-    <input autocomplete="off" name="user_token" placeholder="Your Discord User Token">
+    <input autocomplete="off" name="username" placeholder="Username">
+    <input autocomplete="off" name="password" placeholder="Password">
     <button type="submit">Login</button>
-    {{data}}
 </form>
 {%endblock%}

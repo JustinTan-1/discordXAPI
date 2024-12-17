@@ -1,4 +1,5 @@
 *.env
 *__pycache__
 *flask_session
+*database.db
 .idea/

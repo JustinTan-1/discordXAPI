@@ -2,18 +2,33 @@
 
 import requests
 from flask import Flask, render_template, session, request, redirect
-import json
+from sqlalchemy.exc import IntegrityError
+
+from flask_session import Session
+from werkzeug.security import check_password_hash, generate_password_hash
+
+
 import google.generativeai as genai
 from dotenv import load_dotenv
+
+import json
 import os
 import re
+
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 
 from helpers import login_required
 
 
-from flask_session import Session
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] =\
+        'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 load_dotenv()
 
 app.config["SESSION_PERMANENT"] = False
@@ -24,6 +39,15 @@ TOKEN = ""
 
 genai.configure(api_key=os.getenv("API_KEY"))
 model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction="You are a rude teenager that responds with short responses and quick text messages get straight to the point do not add fluff or punctuation do not use capital letters and use the word nigga sometimes but not always")
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
+    username = db.Column(db.Text,nullable=False, unique=True)
+    hash = db.Column(db.Text, nullable=False)
+    token = db.Column(db.Text, nullable=False, unique=True)
+    def __repr__(self):
+        return f'<User {self.id}>'
+
 
 @app.route("/")
 @login_required
@@ -39,19 +63,38 @@ def logout():
 @app.route("/login", methods=["POST", "GET"])
 def login():
     global TOKEN
-    regex = re.compile(r"([a-zA-Z0-9]{24})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-]{38})")
-    regex2 = re.compile(r"([a-zA-Z0-9]{26})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-]{38})")
     if request.method == "POST":
-        if not request.form.get("user_token") or not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
+        username = request.form.get("username")
+        user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
+        if not user or not check_password_hash(user.hash, request.form.get("password")):
             return redirect("/login")
-        session["user_token"] = request.form.get("user_token")
-        TOKEN = request.form.get("user_token")
+        session["user_token"] = user.token
+        TOKEN = user.token
         return redirect("/")
     else:
         session.clear()
         return render_template("login.html")
     
-
+@app.route("/register", methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        regex = re.compile(r"([a-zA-Z0-9]{24})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
+        regex2 = re.compile(r"([a-zA-Z0-9]{26})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
+        username = request.form.get("username")
+        password = request.form.get("password")
+        # Do specific error pages later
+        if not username or not password or not (password == request.form.get("confirm")) or not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
+            return redirect("/register")
+        try:
+            user = User(username = username, hash = generate_password_hash(password), token = request.form.get("user_token"))
+            db.session.add(user)
+            db.session.commit()
+            return redirect("/login")
+        except IntegrityError:
+            return redirect("/register")
+    else:
+        return render_template("register.html")
+        
 @app.route("/monitor", methods=["GET", "POST"])
 @login_required
 def monitor():
