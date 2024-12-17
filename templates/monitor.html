@@ -1,4 +1,6 @@
+{% extends "resultstemplate.html"%}
 
+{%block main%}
 <h2>Search messages in channel: {{channel_id}}</h2>
 <a href="/monitor"><button>Go Back</button></a>
 <form action="/message" method="post">
@@ -10,8 +12,10 @@
     <input type="text" name="reply_text" placeholder="Reply With:">   
 <button type="submit">Reply</button>
 {% for item in data %}
-<div class="data">{{item["content"]}} | <strong>FROM:</strong> {{item["author"]["username"]}} | {{item["timestamp"]}} |<input type="checkbox" value={{item["id"]}} name={{item["id"]}}></div>
+<div class="data">{{item["content"]}} | <strong>FROM:</strong> {{item["author"]["username"]}} | {{item["timestamp"]}} | <input type="checkbox" value={{item["id"]}} name={{item["id"]}}></div>
 {%endfor%}
 <input type="hidden" name="channel_id" value={{channel_id}}>
      
 </form>
+
+{%endblock%}

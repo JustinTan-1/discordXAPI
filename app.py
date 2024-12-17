@@ -6,6 +6,7 @@ import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
+import re
 
 from helpers import login_required
 
@@ -38,8 +39,10 @@ def logout():
 @app.route("/login", methods=["POST", "GET"])
 def login():
     global TOKEN
+    regex = re.compile(r"([a-zA-Z0-9]{24})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-]{38})")
+    regex2 = re.compile(r"([a-zA-Z0-9]{26})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-]{38})")
     if request.method == "POST":
-        if not request.form.get("user_token"):
+        if not request.form.get("user_token") or not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
             return redirect("/login")
         session["user_token"] = request.form.get("user_token")
         TOKEN = request.form.get("user_token")
@@ -71,7 +74,7 @@ def monitor():
             # query for the next 100 messages
             else:
                 r = requests.get(f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=100&before={lastMsgId}", headers=headers)
-            if r:
+            if json.loads(r.text):
             # Saving the last message ID so that the next iteration can query for the next 100 messages
                 raw_data = json.loads(r.text)
                 lastMsgId = raw_data[-1]["id"]
@@ -116,6 +119,8 @@ def message():
                 if r:
                     current_msg = json.loads(r.text)
                     requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
+        return redirect("/monitor")
+    else:
         return redirect("/monitor")
             
     
