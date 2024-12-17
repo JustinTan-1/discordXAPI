@@ -76,11 +76,14 @@ def monitor():
                 r = requests.get(f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=100&before={lastMsgId}", headers=headers)
             if json.loads(r.text):
             # Saving the last message ID so that the next iteration can query for the next 100 messages
-                raw_data = json.loads(r.text)
-                lastMsgId = raw_data[-1]["id"]
-                for item in raw_data:
-                    if request.form.get("text") in item["content"]:
-                        data.append(item)
+                try:
+                    raw_data = json.loads(r.text)
+                    lastMsgId = raw_data[-1]["id"]
+                    for item in raw_data:
+                        if request.form.get("text") in item["content"]:
+                            data.append(item)
+                except KeyError:
+                    return redirect("/monitor")
             else:
                 return redirect("/monitor")
         return render_template("monitor.html", data=data, channel_id=channel_id)  
