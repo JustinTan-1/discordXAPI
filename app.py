@@ -2,7 +2,7 @@
 
 import requests
 from flask import Flask, render_template, session, request, redirect
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -16,7 +16,6 @@ import os
 import re
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import func
 
 from helpers import login_required
 
@@ -65,9 +64,12 @@ def login():
     global TOKEN
     if request.method == "POST":
         username = request.form.get("username")
-        user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
-        if not user or not check_password_hash(user.hash, request.form.get("password")):
-            return redirect("/login")
+        try:
+            user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
+        except NoResultFound:
+            return render_template("error.html", error_text="Account username does not exist")
+        if not check_password_hash(user.hash, request.form.get("password")):
+            return render_template("error.html", error_text="Incorrect password")
         session["user_token"] = user.token
         TOKEN = user.token
         return redirect("/")
@@ -78,20 +80,26 @@ def login():
 @app.route("/register", methods=["POST", "GET"])
 def register():
     if request.method == "POST":
+        # Valid discord user token format
         regex = re.compile(r"([a-zA-Z0-9]{24})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
         regex2 = re.compile(r"([a-zA-Z0-9]{26})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
         username = request.form.get("username")
         password = request.form.get("password")
-        # Do specific error pages later
-        if not username or not password or not (password == request.form.get("confirm")) or not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
-            return redirect("/register")
+        if not username:
+            return render_template("error.html", error_text="Please enter a username")
+        if not password:
+            return render_template("error.html", error_text="Please enter a password")
+        if not (password == request.form.get("confirm")):
+            return render_template("error.html", error_text="Passwords do not match")
+        if not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
+            return render_template("error.html", error_text="Please enter a valid discord user token")
         try:
             user = User(username = username, hash = generate_password_hash(password), token = request.form.get("user_token"))
             db.session.add(user)
             db.session.commit()
             return redirect("/login")
         except IntegrityError:
-            return redirect("/register")
+            return render_template("error.html", error_text="Username already exists")
     else:
         return render_template("register.html")
         
