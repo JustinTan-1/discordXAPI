@@ -6,11 +6,21 @@ A Discord Channel monitor that reads messages from discord channels and displays
 This application is created using flask. HTML/CSS templates are generated and rendered using Jinja syntax. Required dependancies: Flask, SQLAlchemy, GoogleGenAI, .env, 
 
 ## Installation
-To clone and run this application, you need Git and the required dependancies. 
-```console
-$ git clone 
+To clone and run this application, you need Git and the required dependancies. You will also need to create a file in the project directory called "database.db".
 
-$ cd 
+You will also need to create a .env file with a GoogleGemini API key
+```console
+# Your API key here
+API_KEY = ""
+```
+
+```console
+$ git clone https://github.com/JustinTan-1/discordtool.git
+
+$ cd discordtool
+
+# Run after all dependancies have been installed and database has been created
+$ flask run
 ```
 
 ## How to get User Token on Discord
