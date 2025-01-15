@@ -37,7 +37,9 @@ Session(app)
 TOKEN = ""
 
 genai.configure(api_key=os.getenv("API_KEY"))
-model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction="You are a rude teenager that responds with short responses and quick text messages get straight to the point do not add fluff or punctuation do not use capital letters and use the word nigga sometimes but not always")
+
+# To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
+model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)

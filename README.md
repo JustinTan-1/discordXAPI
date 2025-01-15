@@ -3,7 +3,15 @@
 A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies through Google Gemini AI. 
 
 ## Specifications
-This application is created using flask. HTML/CSS templates are generated and rendered using Jinja syntax. Required dependancies: Flask
+This application is created using flask. HTML/CSS templates are generated and rendered using Jinja syntax. Required dependancies: Flask, SQLAlchemy, GoogleGenAI, .env, 
+
+## Installation
+To clone and run this application, you need Git and the required dependancies. 
+```console
+$ git clone 
+
+$ cd 
+```
 
 ## How to get User Token on Discord
 
