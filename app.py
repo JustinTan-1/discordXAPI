@@ -1,4 +1,4 @@
-#talk about the limitations with flask and how you cannot render pages multiple times repeatively
+#limitations with flask, you cannot render pages multiple times repeatively which blocks the possibility of dynamic tracking
 
 import requests
 from flask import Flask, render_template, session, request, redirect
