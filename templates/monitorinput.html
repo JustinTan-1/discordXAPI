@@ -2,13 +2,13 @@
 
 {%block main%}
 
-<h2>Monitor a discord server channel</h2>
-<p>If it does not work, check the server ID. Try limiting messages to 100 (lowest value). Additionally, try to Logout and Login with a valid discord user token</p>
+<h2>Search a discord channel</h2>
+<p>If searching does not work, check the server ID. Try limiting messages to 1 (lowest value). Additionally, try to Logout and Login with a valid discord user token</p>
 
 <form action="/monitor" method="post">
     <input class="input--home" autocomplete="off" name="channel_id" placeholder="Server ID">
     <input class="input--home" autocomplete="off" name="text" placeholder="Contains:">
     <input class="input--home" autocomplete="off" name="msgCount" placeholder="How many messages (in hundreds)">
-    <button type="submit">Start Monitoring</button>
+    <button type="submit">Search</button>
 </form>
 {%endblock%}
