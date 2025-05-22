@@ -60,7 +60,7 @@ def index():
 def logout():
     session.clear()
     TOKEN = ""
-    return redirect("/login")
+    return {"Success" : "Successfully Logged out"}
 
 # Saving user Token
 @app.route("/api/login", methods=["POST", "GET"])
@@ -112,17 +112,17 @@ def register():
         return render_template("register.html")
         
 @app.route("/api/monitor", methods=["GET", "POST"])
-@login_required
 def monitor():
     if request.method == "POST":                                                                          
         headers = {                                                                                           
         'authorization': TOKEN
-        }                                                                                                        
-        channel_id = request.form.get("channel_id")
+        }                      
+        request_data = request.get_json()                                                                                  
+        channel_id = request_data.get("channel_id")
         try:
-            numOfMessages = int(request.form.get("msgCount"))
+            numOfMessages = int(request_data.get("msgCount"))
         except ValueError:
-            return redirect("/monitor")
+            return {"error" : "Error getting messages (check channel ID)"}
         data = []
         firstTime = True
         for i in range (0, numOfMessages):
@@ -139,13 +139,13 @@ def monitor():
                     raw_data = json.loads(r.text)
                     lastMsgId = raw_data[-1]["id"]
                     for item in raw_data:
-                        if request.form.get("text") in item["content"]:
+                        if request_data.get("filter").upper().strip() in item["content"].upper().strip():
                             data.append(item)
                 except KeyError:
-                    return redirect("/monitor")
+                    return {"error" : "Error getting messages"}
             else:
-                return redirect("/monitor")
-        return render_template("monitor.html", data=data, channel_id=channel_id)  
+                return {"error" : "No Msgs Found (check channel ID)"}
+        return {"data" : data, "channel_id": channel_id}
     else:
         return render_template("monitorinput.html")
 
