@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
-
+from flask_cors import CORS
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -26,6 +26,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] =\
         'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+CORS(app)
 
 db = SQLAlchemy(app)
 load_dotenv()
@@ -55,57 +56,62 @@ class User(db.Model):
 def index():
     return render_template("home.html") 
     
-@app.route("/logout")
+@app.route("/api/logout")
 def logout():
     session.clear()
+    TOKEN = ""
     return redirect("/login")
 
 # Saving user Token
-@app.route("/login", methods=["POST", "GET"])
+@app.route("/api/login", methods=["POST", "GET"])
 def login():
     global TOKEN
     if request.method == "POST":
-        username = request.form.get("username")
+        data = request.get_json()
+        username = data.get("username")
         try:
             user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
         except NoResultFound:
-            return render_template("error.html", error_text="Account username does not exist")
-        if not check_password_hash(user.hash, request.form.get("password")):
-            return render_template("error.html", error_text="Incorrect password")
+            return {"error" : "Account Not Found"}
+        if not check_password_hash(user.hash, data.get("password")):
+            return {"error" : "Incorrect password"}
         session["user_token"] = user.token
         TOKEN = user.token
-        return redirect("/")
+        print("sucess")
+        return {"Success" : "Account Logged in Successfully", "username" : username}
     else:
         session.clear()
         return render_template("login.html")
     
-@app.route("/register", methods=["POST", "GET"])
+    
+@app.route("/api/register", methods=["POST", "GET"])
 def register():
     if request.method == "POST":
         # Valid discord user token format
         regex = re.compile(r"([a-zA-Z0-9]{24})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
         regex2 = re.compile(r"([a-zA-Z0-9]{26})\.([a-zA-Z0-9-]{6})\.([a-zA-Z0-9-_]{38})")
-        username = request.form.get("username")
-        password = request.form.get("password")
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
         if not username:
-            return render_template("error.html", error_text="Please enter a username")
+            return {"error" : "Please enter a Username"}
         if not password:
-            return render_template("error.html", error_text="Please enter a password")
-        if not (password == request.form.get("confirm")):
-            return render_template("error.html", error_text="Passwords do not match")
-        if not (re.fullmatch(regex, request.form.get("user_token")) or re.fullmatch(regex2, request.form.get("user_token"))):
-            return render_template("error.html", error_text="Please enter a valid discord user token")
+            return {"error" : "Please enter a Password"}
+        if not (password == data.get("confirm")):
+            return {"error" : "Passwords do not match"}
+        if not (re.fullmatch(regex, data.get("user_token")) or re.fullmatch(regex2, data.get("user_token"))):
+            return {"error" : "Please enter a valid discord token"}
         try:
-            user = User(username = username, hash = generate_password_hash(password), token = request.form.get("user_token"))
+            user = User(username = username, hash = generate_password_hash(password), token = data.get("user_token"))
             db.session.add(user)
             db.session.commit()
-            return redirect("/login")
+            return {"Success" : "Account created Successfully!", "username" : username}
         except IntegrityError:
-            return render_template("error.html", error_text="Username already exists")
+            return {"error" : "Username or Token already Exists"}
     else:
         return render_template("register.html")
         
-@app.route("/monitor", methods=["GET", "POST"])
+@app.route("/api/monitor", methods=["GET", "POST"])
 @login_required
 def monitor():
     if request.method == "POST":                                                                          
