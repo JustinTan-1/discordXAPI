@@ -150,22 +150,24 @@ def monitor():
         return render_template("monitorinput.html")
 
 # Replying to selected messages
-@app.route("/message", methods=["POST"])
-@login_required
+@app.route("/api/message", methods=["POST"])
 def message():
-    if request.form.get("mode") == "manual":
+    data = request.get_json()
+    if data.get("mode") == "manual":
         headers = {
             'authorization': TOKEN
         }
-        responses = request.form
-        channel = request.form.get("channel_id")
-        reply_text = request.form.get("reply_text")
-        if not channel or not responses:
-            return redirect("/monitor")
+        responses = data.get("reply_array")
+        channel = data.get("channel_id")
+        reply_text = data.get("reply_text")
+        if not channel:
+            return {"error" : "Missing channel ID"}
+        if not responses:
+            return {"error" : "Please select a message to reply to"}
         for item in responses:
             if item != channel and item != reply_text:
                 requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": reply_text, "message_reference": {"message_id": f"{item}"}})
-        return redirect("/monitor")
+        return {"Success" : "Replies sent!"}
     elif request.form.get("mode") == "ai":
         global model
         headers = {
