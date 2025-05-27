@@ -39,8 +39,6 @@ TOKEN = ""
 
 genai.configure(api_key=os.getenv("API_KEY"))
 
-# To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
-model = genai.GenerativeModel(model_name="gemini-1.5-flash")
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -139,7 +137,10 @@ def monitor():
                     raw_data = json.loads(r.text)
                     lastMsgId = raw_data[-1]["id"]
                     for item in raw_data:
-                        if request_data.get("filter").upper().strip() in item["content"].upper().strip():
+                        if request_data.get("filter") != "":
+                            if request_data.get("filter").upper().strip() in item["content"].upper().strip().split():
+                                data.append(item)
+                        else:
                             data.append(item)
                 except KeyError:
                     return {"error" : "Error getting messages"}
@@ -168,22 +169,24 @@ def message():
             if item != channel and item != reply_text:
                 requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": reply_text, "message_reference": {"message_id": f"{item}"}})
         return {"Success" : "Replies sent!"}
-    elif request.form.get("mode") == "ai":
-        global model
+    elif data.get("mode") == "ai":
+        data = request.get_json()
+        # To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=data.get("prompt"))
         headers = {
             'authorization': TOKEN
         }
-        responses = request.form
-        channel = request.form.get("channel_id")
+        responses = data.get("reply_array")
+        channel = data.get("channel_id")
         if not channel or not responses:
-            return redirect("/monitor")
+            return {"error" : "No Channel or msgs selected"}
         for item in responses:
             if item != channel:
                 r = requests.get(f"https://discord.com/api/v10/channels/{channel}/messages?around={item}&limit=1", headers=headers)
                 if r:
                     current_msg = json.loads(r.text)
                     requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
-        return redirect("/monitor")
+        return {"Success" : "Replies sent!"}
     else:
         return redirect("/monitor")
             
