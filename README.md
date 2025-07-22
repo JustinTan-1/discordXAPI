@@ -46,6 +46,9 @@ https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json=
 
 Once again, it is important to include user token in headers. Additionally, a json argument is required for this specific POST request that includes the type of message that will be posted and the content of the message. In this case, the Discord API uses "message_referece" to indicate a message reply. Once all replys are successfully sent, the user is redirected back to the monitor page.
 
+## Extra Notes
+The HTML/jinja templates provided are for running Flask server locally with a barebones frontend. Use only if unable to access official frontend.
+
 
 ## Future Improvements
 - Transistion PostgreSQL if application will be used extensively
