@@ -48,6 +48,8 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.id}>'
 
+with app.app_context():
+    db.create_all()
 
 @app.route("/")
 @login_required
