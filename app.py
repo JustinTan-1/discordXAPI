@@ -174,7 +174,11 @@ def message():
     elif data.get("mode") == "ai":
         data = request.get_json()
         # To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=data.get("prompt"))
+        if data.get("prompt"):
+            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
+        else:
+            model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+        
         headers = {
             'authorization': TOKEN
         }
@@ -187,7 +191,8 @@ def message():
                 r = requests.get(f"https://discord.com/api/v10/channels/{channel}/messages?around={item}&limit=1", headers=headers)
                 if r:
                     current_msg = json.loads(r.text)
-                    requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
+                    if current_msg[0]["content"]:
+                        requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
         return {"Success" : "Replies sent!"}
     else:
         return redirect("/monitor")
