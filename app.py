@@ -7,9 +7,16 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_cors import CORS
+from snowflake import SnowflakeGenerator
+from PIL import Image
+from io import BytesIO
 
-import google.generativeai as genai
+import google.generativeai as genaiOld
+from google.genai import types
 from dotenv import load_dotenv
+
+from google import genai
+
 
 import json
 import os
@@ -19,7 +26,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from helpers import login_required
 
-
+gen = SnowflakeGenerator(42)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -37,7 +44,7 @@ Session(app)
 
 TOKEN = ""
 
-genai.configure(api_key=os.getenv("API_KEY"))
+genaiOld.configure(api_key=os.getenv("API_KEY"))
 
 
 class User(db.Model):
@@ -175,10 +182,9 @@ def message():
         data = request.get_json()
         # To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
         if data.get("prompt"):
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
+            model = genaiOld.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
         else:
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash")
-        
+            model = genaiOld.GenerativeModel(model_name="gemini-2.5-flash")
         headers = {
             'authorization': TOKEN
         }
@@ -192,7 +198,39 @@ def message():
                 if r:
                     current_msg = json.loads(r.text)
                     if current_msg[0]["content"]:
-                        requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
+                        if data.get(("aiImage")) and data.get("imagePrompt"):
+                            client = genai.Client()
+                            contents = data.get("imagePrompt")
+                            response = client.models.generate_content(
+                                model="gemini-2.0-flash-preview-image-generation",
+                                contents=contents,
+                                config=types.GenerateContentConfig(
+                                response_modalities=['TEXT', 'IMAGE']
+                                )
+                            )
+                            if not response:
+                                return {"error" : "Error Generating AI Image"}
+                            try:
+                                for part in response.candidates[0].content.parts:
+                                    if part.text is not None:
+                                        print(part.text)
+                                    elif part.inline_data is not None:
+                                        bytes_image = part.inline_data.data
+                                        #image = Image.open(bytes_image)
+                                        #image.save('temp.png')
+                                        #image.show() 
+                                files = {
+                                    "files[0]": ("temp.png", bytes_image, "temp.png")
+                                }
+                            except AttributeError as e:
+                                return {"error" : "Error Generating AI Image"}
+                            except UnboundLocalError as e:
+                                return {"error" : "Error Generating AI Image"}
+                            requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
+                            response = requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}}, files=files)
+                            print(response.json())
+                        else:
+                            requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
         return {"Success" : "Replies sent!"}
     else:
         return redirect("/monitor")
