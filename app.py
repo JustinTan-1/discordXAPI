@@ -187,7 +187,8 @@ def message():
                 r = requests.get(f"https://discord.com/api/v10/channels/{channel}/messages?around={item}&limit=1", headers=headers)
                 if r:
                     current_msg = json.loads(r.text)
-                    if data.get(("aiImage")) and data.get("imagePrompt") and current_msg[0]["content"]:
+                    target_msg = current_msg[0]["content"]
+                    if data.get(("aiImage")) and data.get("imagePrompt") and target_msg:
                         client = genai.Client()
                         contents = data.get("imagePrompt")
                         response = client.models.generate_content(
@@ -218,7 +219,7 @@ def message():
                         requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
                         response = requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}}, files=files)
                         print(response.json())
-                    elif current_msg[0]["content"]:
+                    elif target_msg:
                         response = requests.post(f"https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json={"content": f"{model.generate_content(f"{current_msg[0]["content"]}").text}", "message_reference": {"message_id": f"{item}"}})
                         print(response.json())
         return {"Success" : "Replies sent!"}
