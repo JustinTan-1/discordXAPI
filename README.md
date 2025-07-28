@@ -1,6 +1,6 @@
 # Discord Channel Monitor
 #### Description:
-A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies through Google Gemini AI. 
+A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies and/or images through Google Gemini AI. 
 
 ## Specifications
 This application is created using flask.
@@ -8,10 +8,11 @@ This application is created using flask.
 ## Installation
 To clone and run this application, you need Git and the required dependancies. You will also need to create a file in the project directory called "database.db".
 
-You will also need to create a .env file with a GoogleGemini API key
+You will also need to create a .env file with a GoogleGemini API key (the same key for both values)
 ```console
 # Your API key here
-API_KEY = ""
+API_KEY = "YOUR_API_KEY_HERE"
+GEMINI_API_KEY = "YOUR_API_KEY_HERE"
 ```
 
 ```console
@@ -53,5 +54,3 @@ The HTML/jinja templates provided are for running Flask server locally with a ba
 ## Future Improvements
 - Transistion PostgreSQL if application will be used extensively
 - Allow the user to create unique replies for each selected message
-- Allow the user to specify date and time and/or specific usernames
-- Transitioning to a different framework such as React could allow for dynamic re-rendering of the pages and a solution to consistently listen for new messages in a channel
