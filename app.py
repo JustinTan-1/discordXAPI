@@ -38,7 +38,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-genai.configure(api_key=os.getenv("API_KEY"))
+genaiOld.configure(api_key=os.getenv("API_KEY"))
 
 
 class User(db.Model):
@@ -160,7 +160,7 @@ def monitor():
 def message():
     data = request.get_json()
     headers = {
-        'authorization': db.session.execute(db.select(User).filter_by(username=data.get("cookie"))).scalar_one().token
+        'authorization': getToken(data.get("user"))
     }
     if data.get("mode") == "manual":
         headers = {
@@ -181,9 +181,9 @@ def message():
         data = request.get_json()
         # To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
         if data.get("prompt"):
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
+            model = genaiOld.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
         else:
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+            model = genaiOld.GenerativeModel(model_name="gemini-2.5-flash")
         headers = {
             'authorization': getToken(data.get("user"))
         }
@@ -198,15 +198,21 @@ def message():
                     current_msg = json.loads(r.text)
                     target_msg = current_msg[0]["content"]
                     if data.get(("aiImage")) and data.get("imagePrompt") and target_msg:
-                        client = genai.Client()
+                        client = genai.Client(api_key=os.getenv("API_KEY"))
                         contents = data.get("imagePrompt")
-                        response = client.models.generate_content(
-                            model="gemini-2.0-flash-preview-image-generation",
-                            contents=contents,
-                            config=types.GenerateContentConfig(
-                            response_modalities=['TEXT', 'IMAGE']
-                            )
-                        )
+                        #response = client.models.generate_content(
+                            #model="gemini-2.0-flash-preview-image-generation",
+                            #contents=contents,
+                            #config=types.GenerateContentConfig(
+                            #response_modalities=['TEXT', 'IMAGE']
+                            #)
+                        #)
+                        response = client.models.generate_images(
+                        model='imagen-3.0-generate-001',
+                        prompt=contents,
+                        config=types.GenerateImagesConfig(
+                            number_of_images= 1,
+                        ))
                         if not response:
                             return {"error" : "Error Generating AI Image"}
                         try:
