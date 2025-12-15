@@ -1,17 +1,18 @@
 # Discord Channel Monitor
 #### Description:
-A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies through Google Gemini AI. 
+A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies and/or images through Google Gemini AI. 
 
 ## Specifications
-This application is created using flask. HTML/CSS templates are generated and rendered using Jinja syntax. Required dependancies: Flask, SQLAlchemy, GoogleGenAI, .env, 
+This application is created using flask.
 
 ## Installation
 To clone and run this application, you need Git and the required dependancies. You will also need to create a file in the project directory called "database.db".
 
-You will also need to create a .env file with a GoogleGemini API key
+You will also need to create a .env file with a GoogleGemini API key (the same key for both values)
 ```console
 # Your API key here
-API_KEY = ""
+API_KEY = "YOUR_API_KEY_HERE"
+GEMINI_API_KEY = "YOUR_API_KEY_HERE"
 ```
 
 ```console
@@ -46,9 +47,10 @@ https://discord.com/api/v10/channels/{channel}/messages", headers=headers, json=
 
 Once again, it is important to include user token in headers. Additionally, a json argument is required for this specific POST request that includes the type of message that will be posted and the content of the message. In this case, the Discord API uses "message_referece" to indicate a message reply. Once all replys are successfully sent, the user is redirected back to the monitor page.
 
+## Extra Notes
+The HTML/jinja templates provided are for running Flask server locally with a barebones frontend. Use only if unable to access official frontend.
+
 
 ## Future Improvements
 - Transistion PostgreSQL if application will be used extensively
 - Allow the user to create unique replies for each selected message
-- Allow the user to specify date and time and/or specific usernames
-- Transitioning to a different framework such as React could allow for dynamic re-rendering of the pages and a solution to consistently listen for new messages in a channel
