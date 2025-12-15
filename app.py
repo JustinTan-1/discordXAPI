@@ -35,8 +35,6 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-TOKEN = ""
-
 genai.configure(api_key=os.getenv("API_KEY"))
 
 
@@ -57,13 +55,11 @@ def index():
 @app.route("/api/logout")
 def logout():
     session.clear()
-    TOKEN = ""
     return {"Success" : "Successfully Logged out"}
 
 # Saving user Token
 @app.route("/api/login", methods=["POST", "GET"])
 def login():
-    global TOKEN
     if request.method == "POST":
         data = request.get_json()
         username = data.get("username")
@@ -73,8 +69,7 @@ def login():
             return {"error" : "Account Not Found"}
         if not check_password_hash(user.hash, data.get("password")):
             return {"error" : "Incorrect password"}
-        session["user_token"] = user.token
-        TOKEN = user.token
+        session["user"] = data.get("username")
         print("sucess")
         return {"Success" : "Account Logged in Successfully", "username" : username}
     else:
@@ -111,11 +106,12 @@ def register():
         
 @app.route("/api/monitor", methods=["GET", "POST"])
 def monitor():
-    if request.method == "POST":                                                                          
+    if request.method == "POST":  
+        request_data = request.get_json()                                           
         headers = {                                                                                           
-        'authorization': TOKEN
+        'authorization': getToken(request_data.get("user"))
         }                      
-        request_data = request.get_json()                                                                                  
+                                                                                 
         channel_id = request_data.get("channel_id")
         try:
             numOfMessages = int(request_data.get("msgCount"))
@@ -135,6 +131,7 @@ def monitor():
             # Saving the last message ID so that the next iteration can query for the next 100 messages
                 try:
                     raw_data = json.loads(r.text)
+                    print(raw_data)
                     lastMsgId = raw_data[-1]["id"]
                     for item in raw_data:
                         if request_data.get("filter") != "":
@@ -142,7 +139,8 @@ def monitor():
                                 data.append(item)
                         else:
                             data.append(item)
-                except KeyError:
+                except KeyError as error:
+                    print(error)
                     return {"error" : "Error getting messages"}
             else:
                 return {"error" : "No Msgs Found (check channel ID)"}
@@ -156,7 +154,7 @@ def message():
     data = request.get_json()
     if data.get("mode") == "manual":
         headers = {
-            'authorization': TOKEN
+            'authorization': getToken(data.get("user"))
         }
         responses = data.get("reply_array")
         channel = data.get("channel_id")
@@ -172,9 +170,9 @@ def message():
     elif data.get("mode") == "ai":
         data = request.get_json()
         # To create a custom prompt insert argument system_instruction="{your prompt}" after "model_name"
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=data.get("prompt"))
+        model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=data.get("prompt"))
         headers = {
-            'authorization': TOKEN
+            'authorization': getToken(data.get("user"))
         }
         responses = data.get("reply_array")
         channel = data.get("channel_id")
@@ -189,5 +187,20 @@ def message():
         return {"Success" : "Replies sent!"}
     else:
         return redirect("/monitor")
-            
+    
+@app.route("/api/change-token", methods=["POST"])
+def changeToken():
+    data = request.get_json()
+    user_name = data.get("user")
+    user = db.session.execute(db.select(User).filter_by(username=user_name)).scalar_one()
+    if not user:
+        return {"error" : "No User Found"}
+    user.token = data.get("new_token")
+    db.session.add(user)
+    db.session.commit()
+    return {"Success" : "Token changed successfully!"}
+
+def getToken(user):
+    print(user)
+    return db.session.execute(db.select(User).filter_by(username=user)).scalar_one().token
     
