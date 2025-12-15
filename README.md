@@ -1,6 +1,6 @@
 # Discord Channel Monitor
 #### Description:
-A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies and/or images through Google Gemini AI. 
+A Discord Channel monitor that reads messages from discord channels and displays them. Users can filter messages by text and select messages to reply to through the UI with a single reply or generate replies 
 <img width="3710" height="2116" alt="image" src="https://github.com/user-attachments/assets/6722d3c0-fc26-485b-9761-2892d5785be8" />
 
 ## Specifications
